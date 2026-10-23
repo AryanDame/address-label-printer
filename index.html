@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Address Label Printer v0.1</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7.5' fill='%232443b5'/%3E%3Cpath d='M7 9.5h18a2 2 0 0 1 2 2V17l-5.5 5.5H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3Cpath d='M27 17l-5.5 5.5V19a2 2 0 0 1 2-2z' fill='%23b9c6f3'/%3E%3Crect x='8.5' y='12.2' width='10' height='2.4' rx='1.2' fill='%232443b5'/%3E%3Crect x='8.5' y='16' width='12.5' height='1.7' rx='.85' fill='%239aabe6'/%3E%3Crect x='8.5' y='19.1' width='8' height='1.7' rx='.85' fill='%239aabe6'/%3E%3C/svg%3E">
+<style>
+/* Version 0.1: a single form that prints one address on one label of sheet 32091.
+   Layout: one narrow column, the form first and the print tips under it. */
+:root {
+  --desk: #eceef2;
+  --panel: #ffffff;
+  --field: #f5f6f9;
+  --ink: #161e2d;
+  --ink-2: #4b5669;
+  --ink-3: #6f798b;
+  --rule: #d9dde4;
+  --action: #2443b5;
+  --action-hover: #1c3693;
+  --action-ink: #ffffff;
+  --action-soft: #e8ecfb;
+  --danger: #b3261e;
+  --shade: rgba(22, 30, 45, 0.16);
+  --paper: #ffffff;
+  --paper-ink: #000000;
+  --f-ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --f-data: "Cascadia Mono", Consolas, "SF Mono", ui-monospace, monospace;
+  --f-label: Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --desk: #111419; --panel: #1a1e26; --field: #141820; --ink: #e9ecf2; --ink-2: #aab2c0; --ink-3: #8a93a4; --rule: #2c323d;
+    --action: #8fa6ff; --action-hover: #aabcff; --action-ink: #0b1233; --action-soft: #222b47; --danger: #ff8a80; --shade: rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --desk: #111419; --panel: #1a1e26; --field: #141820; --ink: #e9ecf2; --ink-2: #aab2c0; --ink-3: #8a93a4; --rule: #2c323d;
+  --action: #8fa6ff; --action-hover: #aabcff; --action-ink: #0b1233; --action-soft: #222b47; --danger: #ff8a80; --shade: rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--desk); color: var(--ink); font: 400 15px/1.5 var(--f-ui); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.top { background: var(--panel); border-bottom: 1px solid var(--rule); }
+.top-inner { max-width: 820px; margin: 0 auto; padding-block: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.top h1 { margin: 0; font-size: 20px; font-weight: 600; }
+.spec { font: 500 12.5px/1 var(--f-data); color: var(--ink-2); background: var(--field); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 10px; white-space: nowrap; }
+.grow { flex: 1 1 auto; }
+.wrap { max-width: 820px; margin: 0 auto; padding-block: 24px 48px; display: flex; flex-direction: column; gap: 18px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.card h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--ink-2); }
+.field small { font-size: 13px; color: var(--ink-3); }
+textarea, select { width: 100%; border: 1px solid var(--rule); border-radius: 8px; background: var(--field); padding: 10px 12px; color: var(--ink); }
+textarea { min-height: 150px; resize: vertical; font-size: 15.5px; line-height: 1.5; }
+textarea:focus, select:focus { outline: none; border-color: var(--action); box-shadow: 0 0 0 3px var(--action-soft); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; border: 1px solid var(--rule); background: var(--panel); padding: 8px 14px; font-weight: 500; cursor: pointer; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.small { padding: 6px 11px; font-size: 13.5px; }
+.btn.primary { background: var(--action); border-color: var(--action); color: var(--action-ink); padding: 11px 22px; font-size: 16px; }
+.btn.primary:hover { background: var(--action-hover); border-color: var(--action-hover); }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.error { margin: 0; color: var(--danger); font-size: 14px; font-weight: 500; }
+.tips ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; color: var(--ink-2); font-size: 14.5px; }
+
+dialog { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 1px solid var(--rule); border-radius: 14px; background: var(--panel); color: var(--ink); box-shadow: 0 30px 80px var(--shade); overflow: auto; }
+dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
+.dlg-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--panel); border-bottom: 1px solid var(--rule); }
+.dlg-head h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.dlg-body { padding: 0 20px 10px; }
+.dlg-body section { display: flex; flex-direction: column; gap: 10px; padding: 18px 0; border-bottom: 1px solid var(--rule); }
+.dlg-body section:last-child { border-bottom: 0; }
+
+#print-root { display: none; }
+@page { size: 210mm 297mm; margin: 0; }
+@media print {
+  html, body { margin: 0 !important; padding: 0 !important; background: var(--paper) !important; }
+  body > *:not(#print-root) { display: none !important; }
+  #print-root { display: block !important; }
+  .print-page { position: relative; width: 209mm; height: 296mm; overflow: hidden; }
+  .lbl { position: absolute; width: 70mm; height: 41mm; padding: 4mm 5mm 4mm 7mm; overflow: hidden; color: var(--paper-ink); font: 11pt/1.22 var(--f-label); }
+  .ln { white-space: pre; overflow: hidden; }
+}
+/* App icon, version badge and the What's new dialog */
+:root {
+  --tag-new: #1c3693; --tag-new-bg: #e3e9fb;
+  --tag-imp: #1e6b3a; --tag-imp-bg: #e1f1e7;
+  --tag-fix: #7a4a00; --tag-fix-bg: #fbefd9;
+  --tag-known: #4b5669; --tag-known-bg: #eceef2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --tag-new: #aabcff; --tag-new-bg: #222b47;
+    --tag-imp: #8fdcb0; --tag-imp-bg: #1c3326;
+    --tag-fix: #f3c27a; --tag-fix-bg: #3a2d17;
+    --tag-known: #aab2c0; --tag-known-bg: #262b35;
+  }
+}
+:root[data-theme="dark"] {
+  --tag-new: #aabcff; --tag-new-bg: #222b47;
+  --tag-imp: #8fdcb0; --tag-imp-bg: #1c3326;
+  --tag-fix: #f3c27a; --tag-fix-bg: #3a2d17;
+  --tag-known: #aab2c0; --tag-known-bg: #262b35;
+}
+.top h1.brand { display: flex; align-items: center; gap: 10px; }
+.app-icon { flex: none; display: block; width: 30px; height: 30px; }
+.ver { font: 600 12px/1 var(--f-data); padding: 6px 9px; border-radius: 999px; border: 1px solid var(--action); color: var(--action); background: var(--action-soft); cursor: pointer; white-space: nowrap; }
+.ver:hover { background: var(--action); color: var(--action-ink); }
+.rel { display: flex; flex-direction: column; gap: 10px; }
+.rel-head { display: flex; align-items: flex-start; gap: 12px; }
+.rel-v { flex: none; min-width: 44px; text-align: center; font: 700 14px/1 var(--f-data); font-variant-numeric: tabular-nums; color: var(--action); background: var(--action-soft); border-radius: 8px; padding: 8px 8px; }
+.rel-name { min-width: 0; }
+.rel h3 { margin: 0; font-size: 16.5px; font-weight: 600; line-height: 1.3; }
+.rel-sub { margin: 2px 0 0; font-size: 13.5px; color: var(--ink-3); max-width: 60ch; }
+.rel-story { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--ink); max-width: 64ch; }
+#newsDlg .notes { list-style: none; margin: 2px 0 0; padding: 0; max-width: none; display: flex; flex-direction: column; gap: 8px; }
+#newsDlg .notes li { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: baseline; font-size: 14px; color: var(--ink-2); }
+.tag { justify-self: start; font: 600 10.5px/1 var(--f-data); letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; background: var(--tag-new-bg); color: var(--tag-new); white-space: nowrap; }
+.tag.improved { background: var(--tag-imp-bg); color: var(--tag-imp); }
+.tag.fixed { background: var(--tag-fix-bg); color: var(--tag-fix); }
+.tag.known { background: var(--tag-known-bg); color: var(--tag-known); }
+.rel-try { margin-top: 4px; padding: 12px 14px 13px; border-radius: 10px; background: var(--field); border: 1px solid var(--rule); }
+.rel-try h4 { margin: 0 0 7px; font: 600 11px/1 var(--f-data); letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
+#newsDlg .rel-try ol { max-width: none; margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; font-size: 14px; color: var(--ink-2); }
+.rel-tech summary { cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.rel-tech summary:hover { color: var(--ink); }
+#newsDlg .rel-tech ul { max-width: none; margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 13.5px; color: var(--ink-2); }
+.older summary { cursor: pointer; font-weight: 500; font-size: 14.5px; }
+.older .rel { padding: 16px 0 6px; }
+.older .rel + .rel { border-top: 1px solid var(--rule); }
+@media (max-width: 520px) { #newsDlg .notes li { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner gutter">
+    <h1 class="brand"><svg class="app-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="7.5" fill="#2443b5"/><path d="M7 9.5h18a2 2 0 0 1 2 2V17l-5.5 5.5H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z" fill="#fff"/><path d="M27 17l-5.5 5.5V19a2 2 0 0 1 2-2z" fill="#b9c6f3"/><rect x="8.5" y="12.2" width="10" height="2.4" rx="1.2" fill="#2443b5"/><rect x="8.5" y="16" width="12.5" height="1.7" rx=".85" fill="#9aabe6"/><rect x="8.5" y="19.1" width="8" height="1.7" rx=".85" fill="#9aabe6"/></svg><span>Address Label Printer</span></h1>
+    <button type="button" class="ver" data-news-open title="What's new in this version">v0.1</button>
+    <span class="spec">70 × 41 mm · 21 per A4 · sheet 32091</span>
+    <span class="grow"></span>
+    <button type="button" class="btn small" data-news-open>What's new</button>
+  </div>
+</header>
+<main class="wrap gutter">
+  <section class="card" aria-labelledby="formTitle">
+    <h2 id="formTitle">Print one address label</h2>
+    <label class="field" for="addr"><span>Address, one line per row</span>
+      <textarea id="addr" rows="6" spellcheck="false" placeholder="Recipient name&#10;Organisation&#10;Street and number&#10;Postcode and town&#10;COUNTRY"></textarea>
+    </label>
+    <label class="field" for="pos"><span>Label on the sheet</span>
+      <select id="pos"></select>
+      <small>Labels are numbered left to right, top to bottom: 1 to 3 is the top row, 19 to 21 the bottom row.</small>
+    </label>
+    <div class="actions">
+      <button type="button" class="btn primary" id="printBtn">Print label</button>
+      <p class="error" id="err" hidden>Type an address first.</p>
+    </div>
+  </section>
+  <section class="card tips" aria-labelledby="tipsTitle">
+    <h2 id="tipsTitle">Before you print</h2>
+    <ol>
+      <li>Use Edge or Chrome on a computer.</li>
+      <li>Put the label sheet in the printer so it prints on the label side. The paper tray usually shows which side faces up.</li>
+      <li>In the print window: paper size A4, Scale 100% (not Fit to page), Margins Default, Headers and footers off.</li>
+    </ol>
+  </section>
+</main>
+<dialog id="newsDlg" aria-labelledby="newsTitle">
+  <div class="dlg-head"><h2 id="newsTitle">What's new</h2><button type="button" class="btn small" id="newsClose">Close</button></div>
+  <div class="dlg-body" id="newsBody"></div>
+</dialog>
+
+<div id="print-root" aria-hidden="true"></div>
+<script>
+(() => {
+  'use strict';
+  /* Sheet 32091: 3 across, 7 down, 70 x 41 mm, first row 5 mm from the top edge. */
+  const SHEET = { cols: 3, rows: 7, w: 70, h: 41, top: 5, left: 0 };
+  const COLS = ['left', 'middle', 'right'];
+  const $ = sel => document.querySelector(sel);
+  const pos = $('#pos'), addr = $('#addr');
+
+  for (let p = 1; p <= SHEET.cols * SHEET.rows; p++) {
+    const o = document.createElement('option');
+    o.value = String(p);
+    o.textContent = 'Label ' + p + ' (row ' + Math.ceil(p / SHEET.cols) + ', ' + COLS[(p - 1) % SHEET.cols] + ')';
+    pos.appendChild(o);
+  }
+
+  function addressLines() {
+    const lines = addr.value.replace(/\r/g, '').split('\n').map(l => l.trim());
+    while (lines.length && !lines[0]) lines.shift();
+    while (lines.length && !lines[lines.length - 1]) lines.pop();
+    return lines;
+  }
+  function labelXY(p) {
+    const i = p - 1;
+    return { x: SHEET.left + (i % SHEET.cols) * SHEET.w, y: SHEET.top + Math.floor(i / SHEET.cols) * SHEET.h };
+  }
+
+  function buildPrint() {
+    const root = $('#print-root');
+    root.replaceChildren();
+    const page = document.createElement('section');
+    page.className = 'print-page';
+    const { x, y } = labelXY(+pos.value);
+    const label = document.createElement('div');
+    label.className = 'lbl';
+    label.style.left = x + 'mm';
+    label.style.top = y + 'mm';
+    for (const line of addressLines()) {
+      const d = document.createElement('div');
+      d.className = 'ln';
+      d.textContent = line || ' ';
+      label.appendChild(d);
+    }
+    page.appendChild(label);
+    root.appendChild(page);
+  }
+
+  $('#printBtn').addEventListener('click', async () => {
+    if (!addressLines().length) {
+      $('#err').hidden = false;
+      addr.focus();
+      return;
+    }
+    $('#err').hidden = true;
+    buildPrint();
+    window.print();
+  });
+  addr.addEventListener('input', () => { if (addressLines().length) $('#err').hidden = true; });
+  window.addEventListener('beforeprint', () => {
+    buildPrint();
+  });
+})();
+</script>
+<script>/* What's new: the story, notes, demo steps and technical notes of this version, and the notes of the ones before it. */
+(() => {
+  'use strict';
+  const VERSION = '0.1';
+  const RELEASES = [{"v": "0.1", "title": "First print", "summary": "Type an address, pick a label number and print it in exactly the right place.", "highlight": "The smallest tool that solves the real problem: one address on one label of a half-used sheet, without a Word template or a test print.", "notes": [["New", "Type an address and print it on any of the 21 labels of sheet 32091 (70 × 41 mm)."], ["New", "Exact placement on A4: 3 labels across, 7 down, starting 5 mm from the top edge of the paper."], ["New", "Only the address is printed, so a half-used sheet can go back in the printer."], ["New", "Print tips for Edge and Chrome: Scale 100%, Margins Default, Headers and footers off."], ["New", "Light and dark mode follow the setting of your computer."], ["Known issue", "You choose the label by its number, and there is no preview yet."], ["Known issue", "Very long lines are cut off at the right edge of the label."], ["Known issue", "Nothing is saved yet: the address is gone when you close the page."]], "try": ["Type a name and address, one line per row.", "Under Label on the sheet, choose Label 5 (row 2, middle).", "Press Print label. In the print window, check Scale 100% and Margins Default.", "Print on plain paper and hold it over a label sheet against the light: the text sits on label 5."], "tech": ["One self-contained HTML file: no installation, no internet connection and no libraries.", "The print page is A4 with zero page margins (CSS @page). Each label is placed in millimetres: left is column × 70 mm, top is 5 mm + row × 41 mm.", "The text keeps 7 mm from the left edge of the label, 5 mm from the right and 4 mm from the top and bottom.", "When printing, the screen interface is hidden and only a separate print layer goes to the printer."]}];
+  const AUTO_OPEN = true;
+  const TAG_CLASS = { New: 'new', Improved: 'improved', Fixed: 'fixed', 'Known issue': 'known' };
+  const dlg = document.getElementById('newsDlg');
+  const body = document.getElementById('newsBody');
+  const el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  };
+  function notesList(notes) {
+    const ul = el('ul', 'notes');
+    for (const [type, text] of notes) {
+      const li = el('li');
+      li.append(el('span', 'tag ' + (TAG_CLASS[type] || 'new'), type), el('span', '', text));
+      ul.appendChild(li);
+    }
+    return ul;
+  }
+  function block(r, full) {
+    const sec = el('div', 'rel' + (full ? ' rel-now' : ''));
+    const head = el('div', 'rel-head');
+    head.appendChild(el('span', 'rel-v', r.v));
+    const name = el('div', 'rel-name');
+    name.appendChild(el('h3', '', r.title));
+    name.appendChild(el('p', 'rel-sub', r.summary));
+    head.appendChild(name);
+    sec.appendChild(head);
+    if (full && r.highlight) sec.appendChild(el('p', 'rel-story', r.highlight));
+    sec.appendChild(notesList(r.notes));
+    if (full && r.try && r.try.length) {
+      const box = el('div', 'rel-try');
+      box.appendChild(el('h4', '', 'Try it'));
+      const ol = el('ol');
+      for (const step of r.try) ol.appendChild(el('li', '', step));
+      box.appendChild(ol);
+      sec.appendChild(box);
+    }
+    if (full && r.tech && r.tech.length) {
+      const det = el('details', 'rel-tech');
+      det.appendChild(el('summary', '', 'Under the hood'));
+      const ul = el('ul');
+      for (const t of r.tech) ul.appendChild(el('li', '', t));
+      det.appendChild(ul);
+      sec.appendChild(det);
+    }
+    return sec;
+  }
+  function render() {
+    const list = RELEASES.slice().reverse();
+    document.getElementById('newsTitle').textContent = "What's new in version " + VERSION;
+    body.replaceChildren();
+    const now = el('section');
+    now.appendChild(block(list[0], true));
+    body.appendChild(now);
+    if (list.length > 1) {
+      const sec = el('section');
+      const det = el('details', 'older');
+      det.appendChild(el('summary', '', 'Earlier versions (' + (list.length - 1) + ')'));
+      for (const r of list.slice(1)) det.appendChild(block(r, false));
+      sec.appendChild(det);
+      body.appendChild(sec);
+    }
+  }
+  function open() {
+    render();
+    if (!dlg.open) dlg.showModal();
+    dlg.scrollTop = 0;
+  }
+  document.querySelectorAll('[data-news-open]').forEach(b => b.addEventListener('click', open));
+  document.getElementById('newsClose').addEventListener('click', () => dlg.close());
+  if (AUTO_OPEN) {
+    let seen = true;
+    try {
+      seen = !!localStorage.getItem('alp-seen-' + VERSION);
+      localStorage.setItem('alp-seen-' + VERSION, '1');
+    } catch (e) { seen = true; }
+    if (!seen) setTimeout(open, 350);
+  }
+})();
+</script>
+</body>
+</html>
