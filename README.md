@@ -1,6 +1,6 @@
 # Address Label Printer
 
-Print an address on any of the 21 labels of self-adhesive sheet 32091 (70 × 41 mm, 3 across and 7 down on A4), in exactly the right place.
+Print addresses on self-adhesive label sheet 32091 (70 × 41 mm, 3 across and 7 down on A4). Click the label you want on a picture of the sheet, watch the address appear on an enlarged preview, and print it in exactly the right place.
 
 **Open it here: https://aryandame.github.io/address-label-printer/**
 

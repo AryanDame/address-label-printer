@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Address Label Printer v0.1</title>
+<title>Address Label Printer v0.2</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7.5' fill='%232443b5'/%3E%3Cpath d='M7 9.5h18a2 2 0 0 1 2 2V17l-5.5 5.5H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3Cpath d='M27 17l-5.5 5.5V19a2 2 0 0 1 2-2z' fill='%23b9c6f3'/%3E%3Crect x='8.5' y='12.2' width='10' height='2.4' rx='1.2' fill='%232443b5'/%3E%3Crect x='8.5' y='16' width='12.5' height='1.7' rx='.85' fill='%239aabe6'/%3E%3Crect x='8.5' y='19.1' width='8' height='1.7' rx='.85' fill='%239aabe6'/%3E%3C/svg%3E">
 <style>
-/* Version 0.1: a single form that prints one address on one label of sheet 32091.
-   Layout: one narrow column, the form first and the print tips under it. */
+/* Version 0.2: pick the label on a picture of the sheet, with a live, enlarged preview.
+   Layout: two panels, the sheet on the left and the address with its preview on the right. */
 :root {
   --desk: #eceef2;
   --panel: #ffffff;
@@ -20,10 +20,14 @@
   --action-hover: #1c3693;
   --action-ink: #ffffff;
   --action-soft: #e8ecfb;
-  --danger: #b3261e;
   --shade: rgba(22, 30, 45, 0.16);
   --paper: #ffffff;
   --paper-ink: #000000;
+  --paper-muted: #8a94a5;
+  --paper-hover: #f2f4f8;
+  --cut: #c9cfd8;
+  --mark: #ffcf2e;
+  --mark-ink: #221a00;
   --f-ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --f-data: "Cascadia Mono", Consolas, "SF Mono", ui-monospace, monospace;
   --f-label: Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif;
@@ -32,13 +36,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --desk: #111419; --panel: #1a1e26; --field: #141820; --ink: #e9ecf2; --ink-2: #aab2c0; --ink-3: #8a93a4; --rule: #2c323d;
-    --action: #8fa6ff; --action-hover: #aabcff; --action-ink: #0b1233; --action-soft: #222b47; --danger: #ff8a80; --shade: rgba(0, 0, 0, 0.45);
+    --action: #8fa6ff; --action-hover: #aabcff; --action-ink: #0b1233; --action-soft: #222b47; --shade: rgba(0, 0, 0, 0.45);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --desk: #111419; --panel: #1a1e26; --field: #141820; --ink: #e9ecf2; --ink-2: #aab2c0; --ink-3: #8a93a4; --rule: #2c323d;
-  --action: #8fa6ff; --action-hover: #aabcff; --action-ink: #0b1233; --action-soft: #222b47; --danger: #ff8a80; --shade: rgba(0, 0, 0, 0.45);
+  --action: #8fa6ff; --action-hover: #aabcff; --action-ink: #0b1233; --action-soft: #222b47; --shade: rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -49,27 +53,45 @@ button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
 .gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .top { background: var(--panel); border-bottom: 1px solid var(--rule); }
-.top-inner { max-width: 820px; margin: 0 auto; padding-block: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.top-inner { max-width: 1080px; margin: 0 auto; padding-block: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
 .top h1 { margin: 0; font-size: 20px; font-weight: 600; }
 .spec { font: 500 12.5px/1 var(--f-data); color: var(--ink-2); background: var(--field); border: 1px solid var(--rule); border-radius: 999px; padding: 6px 10px; white-space: nowrap; }
 .grow { flex: 1 1 auto; }
-.wrap { max-width: 820px; margin: 0 auto; padding-block: 24px 48px; display: flex; flex-direction: column; gap: 18px; }
-.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-.card h2 { margin: 0; font-size: 17px; font-weight: 600; }
-.field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--ink-2); }
-.field small { font-size: 13px; color: var(--ink-3); }
-textarea, select { width: 100%; border: 1px solid var(--rule); border-radius: 8px; background: var(--field); padding: 10px 12px; color: var(--ink); }
-textarea { min-height: 150px; resize: vertical; font-size: 15.5px; line-height: 1.5; }
-textarea:focus, select:focus { outline: none; border-color: var(--action); box-shadow: 0 0 0 3px var(--action-soft); }
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.bench { max-width: 1080px; margin: 0 auto; padding-block: 20px 48px; display: grid; gap: 20px; align-items: start; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); }
+@media (max-width: 760px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel h2 { margin: 0; font-size: 17px; font-weight: 600; }
+.hint { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+
+.sheet-map { position: relative; width: 100%; max-width: 100%; aspect-ratio: 210 / 297; background: var(--paper); border-radius: 2px; box-shadow: 0 0 0 1px rgba(22, 30, 45, 0.07), 0 2px 4px rgba(22, 30, 45, 0.08), 0 16px 30px -10px var(--shade); }
+.cell { position: absolute; margin: 0; border: 0; padding: 5px 6px; display: flex; align-items: flex-start; background: var(--paper); color: var(--paper-muted); cursor: pointer; box-shadow: inset 0 0 0 0.5px var(--cut); font: 500 11px/1 var(--f-data); }
+.cell:hover { background: var(--paper-hover); }
+.cell.selected { background: var(--mark); color: var(--mark-ink); box-shadow: inset 0 0 0 2px var(--mark-ink); font-weight: 700; }
+.cell:focus-visible { outline: 2px solid var(--action); outline-offset: -3px; z-index: 1; }
+
+textarea { width: 100%; min-height: 150px; resize: vertical; border: 1px solid var(--rule); border-radius: 8px; background: var(--field); padding: 10px 12px; font-size: 15.5px; line-height: 1.5; color: var(--ink); }
+textarea:focus { outline: none; border-color: var(--action); box-shadow: 0 0 0 3px var(--action-soft); }
+.preview { margin: 0; background: var(--field); border: 1px solid var(--rule); border-radius: 10px; padding: 20px 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.preview-stage { position: relative; max-width: 100%; }
+.preview-scale { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.preview .lbl { border-radius: 1.5mm; box-shadow: 0 0 0 0.6px var(--cut), 0 8px 20px -8px var(--shade); }
+.preview figcaption { font-size: 12.5px; color: var(--ink-3); }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; border: 1px solid var(--rule); background: var(--panel); padding: 8px 14px; font-weight: 500; cursor: pointer; }
 .btn:hover { border-color: var(--ink-3); }
 .btn.small { padding: 6px 11px; font-size: 13.5px; }
-.btn.primary { background: var(--action); border-color: var(--action); color: var(--action-ink); padding: 11px 22px; font-size: 16px; }
+.btn.primary { background: var(--action); border-color: var(--action); color: var(--action-ink); min-height: 48px; font-size: 16px; font-weight: 600; }
 .btn.primary:hover { background: var(--action-hover); border-color: var(--action-hover); }
-.btn:disabled { opacity: 0.6; cursor: progress; }
-.error { margin: 0; color: var(--danger); font-size: 14px; font-weight: 500; }
-.tips ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; color: var(--ink-2); font-size: 14.5px; }
+.btn:disabled, .btn:disabled:hover { opacity: 0.5; cursor: not-allowed; }
+.btn.primary:disabled:hover { background: var(--action); border-color: var(--action); }
+.checklist { font-size: 13.5px; color: var(--ink-2); }
+.checklist summary { cursor: pointer; font-weight: 500; color: var(--ink); }
+.checklist ol { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+
+.lbl { position: relative; display: flex; flex-direction: column; overflow: hidden; background: var(--paper); color: var(--paper-ink); font-family: var(--f-label); }
+.lbl-box { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.lbl-addr { flex: none; margin-block: auto; line-height: 1.22; font-size: 11pt; }
+.lbl-addr .ln { white-space: pre; overflow: hidden; }
+.lbl.is-example { color: var(--paper-muted); }
 
 dialog { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 1px solid var(--rule); border-radius: 14px; background: var(--panel); color: var(--ink); box-shadow: 0 30px 80px var(--shade); overflow: auto; }
 dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
@@ -86,8 +108,7 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
   body > *:not(#print-root) { display: none !important; }
   #print-root { display: block !important; }
   .print-page { position: relative; width: 209mm; height: 296mm; overflow: hidden; }
-  .lbl { position: absolute; width: 70mm; height: 41mm; padding: 4mm 5mm 4mm 7mm; overflow: hidden; color: var(--paper-ink); font: 11pt/1.22 var(--f-label); }
-  .ln { white-space: pre; overflow: hidden; }
+  .lbl.placed { position: absolute; background: transparent; }
 }
 /* App icon, version badge and the What's new dialog */
 :root {
@@ -144,34 +165,33 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
 <header class="top">
   <div class="top-inner gutter">
     <h1 class="brand"><svg class="app-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="7.5" fill="#2443b5"/><path d="M7 9.5h18a2 2 0 0 1 2 2V17l-5.5 5.5H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z" fill="#fff"/><path d="M27 17l-5.5 5.5V19a2 2 0 0 1 2-2z" fill="#b9c6f3"/><rect x="8.5" y="12.2" width="10" height="2.4" rx="1.2" fill="#2443b5"/><rect x="8.5" y="16" width="12.5" height="1.7" rx=".85" fill="#9aabe6"/><rect x="8.5" y="19.1" width="8" height="1.7" rx=".85" fill="#9aabe6"/></svg><span>Address Label Printer</span></h1>
-    <button type="button" class="ver" data-news-open title="What's new in this version">v0.1</button>
+    <button type="button" class="ver" data-news-open title="What's new in this version">v0.2</button>
     <span class="spec">70 × 41 mm · 21 per A4 · sheet 32091</span>
     <span class="grow"></span>
     <button type="button" class="btn small" data-news-open>What's new</button>
   </div>
 </header>
-<main class="wrap gutter">
-  <section class="card" aria-labelledby="formTitle">
-    <h2 id="formTitle">Print one address label</h2>
-    <label class="field" for="addr"><span>Address, one line per row</span>
-      <textarea id="addr" rows="6" spellcheck="false" placeholder="Recipient name&#10;Organisation&#10;Street and number&#10;Postcode and town&#10;COUNTRY"></textarea>
-    </label>
-    <label class="field" for="pos"><span>Label on the sheet</span>
-      <select id="pos"></select>
-      <small>Labels are numbered left to right, top to bottom: 1 to 3 is the top row, 19 to 21 the bottom row.</small>
-    </label>
-    <div class="actions">
-      <button type="button" class="btn primary" id="printBtn">Print label</button>
-      <p class="error" id="err" hidden>Type an address first.</p>
-    </div>
+<main class="bench gutter">
+  <section class="panel" aria-labelledby="sheetTitle">
+    <h2 id="sheetTitle">Label sheet</h2>
+    <div class="sheet-map" id="sheetMap" role="radiogroup" aria-label="Choose the label to print on"></div>
+    <p class="hint" id="sheetHint"></p>
   </section>
-  <section class="card tips" aria-labelledby="tipsTitle">
-    <h2 id="tipsTitle">Before you print</h2>
-    <ol>
-      <li>Use Edge or Chrome on a computer.</li>
-      <li>Put the label sheet in the printer so it prints on the label side. The paper tray usually shows which side faces up.</li>
-      <li>In the print window: paper size A4, Scale 100% (not Fit to page), Margins Default, Headers and footers off.</li>
-    </ol>
+  <section class="panel" aria-labelledby="addrTitle">
+    <h2 id="addrTitle">Address</h2>
+    <textarea id="addr" rows="6" spellcheck="false" aria-labelledby="addrTitle" placeholder="Recipient name&#10;Organisation&#10;Street and number&#10;Postcode and town&#10;COUNTRY"></textarea>
+    <figure class="preview" id="previewWrap">
+      <div class="preview-stage" id="previewStage"><div class="preview-scale" id="previewScale"></div></div>
+      <figcaption id="caption"></figcaption>
+    </figure>
+    <button type="button" class="btn primary" id="printBtn">Print</button>
+    <details class="checklist">
+      <summary>Print settings checklist</summary>
+      <ol>
+        <li>Load the label sheet so the printer prints on the label side.</li>
+        <li>In the print window: paper size A4, Scale 100% (not Fit to page), Margins Default, Headers and footers off.</li>
+      </ol>
+    </details>
   </section>
 </main>
 <dialog id="newsDlg" aria-labelledby="newsTitle">
@@ -183,18 +203,14 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
 <script>
 (() => {
   'use strict';
-  /* Sheet 32091: 3 across, 7 down, 70 x 41 mm, first row 5 mm from the top edge. */
   const SHEET = { cols: 3, rows: 7, w: 70, h: 41, top: 5, left: 0 };
-  const COLS = ['left', 'middle', 'right'];
+  const INSET = { l: 7, r: 5, tb: 4 };
+  const PAGE_W = 210, PAGE_H = 297;
+  const EXAMPLE = ['Ms Elena Ruiz', 'Universidad de Ejemplo', 'Calle Mayor 10', '28013 Madrid', 'SPAIN'];
   const $ = sel => document.querySelector(sel);
-  const pos = $('#pos'), addr = $('#addr');
-
-  for (let p = 1; p <= SHEET.cols * SHEET.rows; p++) {
-    const o = document.createElement('option');
-    o.value = String(p);
-    o.textContent = 'Label ' + p + ' (row ' + Math.ceil(p / SHEET.cols) + ', ' + COLS[(p - 1) % SHEET.cols] + ')';
-    pos.appendChild(o);
-  }
+  const make = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const addr = $('#addr');
+  let selected = 1;
 
   function addressLines() {
     const lines = addr.value.replace(/\r/g, '').split('\n').map(l => l.trim());
@@ -202,52 +218,110 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     while (lines.length && !lines[lines.length - 1]) lines.pop();
     return lines;
   }
-  function labelXY(p) {
+  function posXY(p) {
     const i = p - 1;
     return { x: SHEET.left + (i % SHEET.cols) * SHEET.w, y: SHEET.top + Math.floor(i / SHEET.cols) * SHEET.h };
   }
+  function labelEl(lines) {
+    const el = make('div', 'lbl');
+    el.style.width = SHEET.w + 'mm';
+    el.style.height = SHEET.h + 'mm';
+    el.style.padding = INSET.tb + 'mm ' + INSET.r + 'mm ' + INSET.tb + 'mm ' + INSET.l + 'mm';
+    const box = make('div', 'lbl-box');
+    const inner = make('div', 'lbl-addr');
+    for (const line of lines) inner.appendChild(make('div', 'ln', line || ' '));
+    box.appendChild(inner);
+    el.appendChild(box);
+    return el;
+  }
 
+  function renderMap() {
+    const map = $('#sheetMap');
+    const frag = document.createDocumentFragment();
+    for (let p = 1; p <= SHEET.cols * SHEET.rows; p++) {
+      const { x, y } = posXY(p);
+      const b = make('button', 'cell' + (p === selected ? ' selected' : ''), String(p));
+      b.type = 'button';
+      b.dataset.pos = p;
+      b.setAttribute('role', 'radio');
+      b.setAttribute('aria-checked', String(p === selected));
+      b.setAttribute('aria-label', 'Label ' + p);
+      b.style.left = (x / PAGE_W * 100) + '%';
+      b.style.top = (y / PAGE_H * 100) + '%';
+      b.style.width = (SHEET.w / PAGE_W * 100) + '%';
+      b.style.height = (SHEET.h / PAGE_H * 100) + '%';
+      frag.appendChild(b);
+    }
+    map.replaceChildren(frag);
+    $('#sheetHint').textContent = 'The address prints on label ' + selected + '. Click another label to change it.';
+  }
+  function renderPreview() {
+    const lines = addressLines();
+    const example = !lines.length;
+    const el = labelEl(example ? EXAMPLE : lines);
+    if (example) el.classList.add('is-example');
+    $('#previewScale').replaceChildren(el);
+    scalePreview();
+    $('#caption').textContent = example ? 'Example label. Type an address to see yours.' : 'Label ' + selected + ' · enlarged preview';
+    const btn = $('#printBtn');
+    btn.disabled = example;
+    btn.textContent = example ? 'Type an address to print' : 'Print on label ' + selected;
+  }
+  function scalePreview() {
+    const wrap = $('#previewWrap'), stage = $('#previewStage'), holder = $('#previewScale');
+    const el = holder.firstElementChild;
+    if (!el) return;
+    const s = Math.max(0.4, Math.min(1.6, (wrap.clientWidth - 32) / el.offsetWidth));
+    holder.style.transform = 'scale(' + s + ')';
+    stage.style.width = (el.offsetWidth * s) + 'px';
+    stage.style.height = (el.offsetHeight * s) + 'px';
+  }
   function buildPrint() {
     const root = $('#print-root');
     root.replaceChildren();
-    const page = document.createElement('section');
-    page.className = 'print-page';
-    const { x, y } = labelXY(+pos.value);
-    const label = document.createElement('div');
-    label.className = 'lbl';
-    label.style.left = x + 'mm';
-    label.style.top = y + 'mm';
-    for (const line of addressLines()) {
-      const d = document.createElement('div');
-      d.className = 'ln';
-      d.textContent = line || ' ';
-      label.appendChild(d);
-    }
-    page.appendChild(label);
+    const lines = addressLines();
+    if (!lines.length) return;
+    const page = make('section', 'print-page');
+    const el = labelEl(lines);
+    el.classList.add('placed');
+    const { x, y } = posXY(selected);
+    el.style.left = x + 'mm';
+    el.style.top = y + 'mm';
+    page.appendChild(el);
     root.appendChild(page);
   }
 
-  $('#printBtn').addEventListener('click', async () => {
-    if (!addressLines().length) {
-      $('#err').hidden = false;
-      addr.focus();
-      return;
-    }
-    $('#err').hidden = true;
-    buildPrint();
-    window.print();
+  $('#sheetMap').addEventListener('click', e => {
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    selected = +cell.dataset.pos;
+    renderMap();
+    renderPreview();
+    const again = $('#sheetMap .cell[data-pos="' + selected + '"]');
+    if (again) again.focus({ preventScroll: true });
   });
-  addr.addEventListener('input', () => { if (addressLines().length) $('#err').hidden = true; });
-  window.addEventListener('beforeprint', () => {
-    buildPrint();
+  $('#sheetMap').addEventListener('keydown', e => {
+    const cell = e.target.closest('.cell');
+    const delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -SHEET.cols, ArrowDown: SHEET.cols }[e.key];
+    if (!cell || !delta) return;
+    e.preventDefault();
+    const q = Math.min(SHEET.cols * SHEET.rows, Math.max(1, +cell.dataset.pos + delta));
+    $('#sheetMap .cell[data-pos="' + q + '"]').focus();
   });
+  addr.addEventListener('input', renderPreview);
+  $('#printBtn').addEventListener('click', () => { buildPrint(); window.print(); });
+  window.addEventListener('beforeprint', buildPrint);
+  window.addEventListener('resize', scalePreview);
+
+  renderMap();
+  renderPreview();
 })();
 </script>
 <script>/* What's new: the story, notes, demo steps and technical notes of this version, and the notes of the ones before it. */
 (() => {
   'use strict';
-  const VERSION = '0.1';
-  const RELEASES = [{"v": "0.1", "title": "First print", "summary": "Type an address, pick a label number and print it in exactly the right place.", "highlight": "The smallest tool that solves the real problem: one address on one label of a half-used sheet, without a Word template or a test print.", "notes": [["New", "Type an address and print it on any of the 21 labels of sheet 32091 (70 × 41 mm)."], ["New", "Exact placement on A4: 3 labels across, 7 down, starting 5 mm from the top edge of the paper."], ["New", "Only the address is printed, so a half-used sheet can go back in the printer."], ["New", "Print tips for Edge and Chrome: Scale 100%, Margins Default, Headers and footers off."], ["New", "Light and dark mode follow the setting of your computer."], ["Known issue", "You choose the label by its number, and there is no preview yet."], ["Known issue", "Very long lines are cut off at the right edge of the label."], ["Known issue", "Nothing is saved yet: the address is gone when you close the page."]], "try": ["Type a name and address, one line per row.", "Under Label on the sheet, choose Label 5 (row 2, middle).", "Press Print label. In the print window, check Scale 100% and Margins Default.", "Print on plain paper and hold it over a label sheet against the light: the text sits on label 5."], "tech": ["One self-contained HTML file: no installation, no internet connection and no libraries.", "The print page is A4 with zero page margins (CSS @page). Each label is placed in millimetres: left is column × 70 mm, top is 5 mm + row × 41 mm.", "The text keeps 7 mm from the left edge of the label, 5 mm from the right and 4 mm from the top and bottom.", "When printing, the screen interface is hidden and only a separate print layer goes to the printer."]}];
+  const VERSION = '0.2';
+  const RELEASES = [{"v": "0.1", "title": "First print", "summary": "Type an address, pick a label number and print it in exactly the right place.", "highlight": "The smallest tool that solves the real problem: one address on one label of a half-used sheet, without a Word template or a test print.", "notes": [["New", "Type an address and print it on any of the 21 labels of sheet 32091 (70 × 41 mm)."], ["New", "Exact placement on A4: 3 labels across, 7 down, starting 5 mm from the top edge of the paper."], ["New", "Only the address is printed, so a half-used sheet can go back in the printer."], ["New", "Print tips for Edge and Chrome: Scale 100%, Margins Default, Headers and footers off."], ["New", "Light and dark mode follow the setting of your computer."], ["Known issue", "You choose the label by its number, and there is no preview yet."], ["Known issue", "Very long lines are cut off at the right edge of the label."], ["Known issue", "Nothing is saved yet: the address is gone when you close the page."]], "try": ["Type a name and address, one line per row.", "Under Label on the sheet, choose Label 5 (row 2, middle).", "Press Print label. In the print window, check Scale 100% and Margins Default.", "Print on plain paper and hold it over a label sheet against the light: the text sits on label 5."], "tech": ["One self-contained HTML file: no installation, no internet connection and no libraries.", "The print page is A4 with zero page margins (CSS @page). Each label is placed in millimetres: left is column × 70 mm, top is 5 mm + row × 41 mm.", "The text keeps 7 mm from the left edge of the label, 5 mm from the right and 4 mm from the top and bottom.", "When printing, the screen interface is hidden and only a separate print layer goes to the printer."]}, {"v": "0.2", "title": "See the sheet", "summary": "Pick the label on a picture of the sheet and see a live preview.", "highlight": "Label numbers were the easiest thing to get wrong in 0.1. Now the sheet itself is the control: click the label you want and watch the address appear on an enlarged preview.", "notes": [["New", "Choose the label on a picture of the sheet instead of typing its number."], ["New", "Live preview of the label, enlarged, as you type."], ["New", "Arrow keys move around the sheet picture, and Enter chooses a label."], ["Improved", "The address now sits in the vertical middle of the label."], ["Improved", "Print stays disabled until there is an address, and the button names the label, such as Print on label 8."], ["Known issue", "The tool does not know yet which labels are already used."], ["Known issue", "Long lines are still cut off at the edge of the label."]], "try": ["Click label 8 on the sheet picture. It turns yellow.", "Type an address and watch the enlarged preview fill in.", "Use the arrow keys to move around the sheet, then press Enter to choose a label.", "Press Print on label 8."], "tech": ["The sheet picture and the print are drawn from the same sheet measurements, so they cannot disagree.", "The preview is the real print label at its true size in millimetres, enlarged on screen with a CSS transform.", "The sheet picture works as a group of radio buttons, so screen readers announce each label and which one is chosen."]}];
   const AUTO_OPEN = true;
   const TAG_CLASS = { New: 'new', Improved: 'improved', Fixed: 'fixed', 'Known issue': 'known' };
   const dlg = document.getElementById('newsDlg');
