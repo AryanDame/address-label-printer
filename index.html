@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Address Label Printer v0.3</title>
+<title>Address Label Printer v0.4</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7.5' fill='%232443b5'/%3E%3Cpath d='M7 9.5h18a2 2 0 0 1 2 2V17l-5.5 5.5H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3Cpath d='M27 17l-5.5 5.5V19a2 2 0 0 1 2-2z' fill='%23b9c6f3'/%3E%3Crect x='8.5' y='12.2' width='10' height='2.4' rx='1.2' fill='%232443b5'/%3E%3Crect x='8.5' y='16' width='12.5' height='1.7' rx='.85' fill='%239aabe6'/%3E%3Crect x='8.5' y='19.1' width='8' height='1.7' rx='.85' fill='%239aabe6'/%3E%3C/svg%3E">
 <style>
-/* Address Label Printer, version 0.3.
+/* Address Label Printer, version 0.4.
    Layout: the label sheet as a physical object on the left, the address and its live preview next to it. */
 :root {
   --desk: #eceef2;
@@ -90,6 +90,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .seg button { flex: 1 1 0; min-width: 0; border: 0; background: transparent; border-radius: 6px; padding: 6px 8px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
 .seg button:hover { color: var(--ink); }
 .seg button[aria-checked="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 0 0 1px var(--rule), 0 1px 2px var(--shade); }
+.seg.inline { display: inline-flex; }
+.seg.inline button { flex: 0 0 auto; padding: 6px 10px; }
+.chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); font-size: 13.5px; cursor: pointer; }
+.chip input[type="checkbox"] { accent-color: var(--action); width: 15px; height: 15px; margin: 0; }
+.chip select { border: 0; background: transparent; padding: 0 2px; font-weight: 500; cursor: pointer; }
 
 .top-inner, .bench { max-width: 1120px; }
 .bench { margin: 0 auto; padding-block: 20px 48px; display: grid; gap: 20px; align-items: start; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); }
@@ -128,6 +133,7 @@ textarea { width: 100%; min-height: 150px; resize: vertical; border: 1px solid v
 textarea::placeholder { color: var(--ink-3); }
 textarea:focus { outline: none; border-color: var(--action); box-shadow: 0 0 0 3px var(--action-soft); }
 .assist { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: -6px; font-size: 13px; color: var(--ink-3); }
+.format { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .preview { margin: 0; background: var(--field); border: 1px solid var(--rule); border-radius: 10px; padding: 20px 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 0; }
 .preview-stage { position: relative; max-width: 100%; }
 .preview-scale { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
@@ -158,7 +164,11 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
 .lbl { position: relative; display: flex; flex-direction: column; overflow: hidden; background: var(--paper); color: var(--paper-ink); font-family: var(--f-label); }
 .lbl-box { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .lbl-addr { flex: none; margin-block: auto; line-height: 1.22; }
-.lbl-addr .ln { white-space: pre; overflow: hidden; }
+.lbl-addr { overflow-wrap: anywhere; }
+.lbl-addr.nowrap .ln { white-space: nowrap; }
+.lbl-addr.align-center { text-align: center; }
+.ln.b { font-weight: 700; }
+.ln.caps { text-transform: uppercase; letter-spacing: 0.02em; }
 .lbl.is-example { color: var(--paper-muted); }
 #measure { position: absolute; left: -10000px; top: 0; visibility: hidden; pointer-events: none; }
 #print-root { display: none; }
@@ -228,7 +238,7 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
 <header class="top">
   <div class="top-inner gutter">
     <h1 class="brand"><svg class="app-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="7.5" fill="#2443b5"/><path d="M7 9.5h18a2 2 0 0 1 2 2V17l-5.5 5.5H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z" fill="#fff"/><path d="M27 17l-5.5 5.5V19a2 2 0 0 1 2-2z" fill="#b9c6f3"/><rect x="8.5" y="12.2" width="10" height="2.4" rx="1.2" fill="#2443b5"/><rect x="8.5" y="16" width="12.5" height="1.7" rx=".85" fill="#9aabe6"/><rect x="8.5" y="19.1" width="8" height="1.7" rx=".85" fill="#9aabe6"/></svg><span>Address Label Printer</span></h1>
-    <button type="button" class="ver" data-news-open title="What's new in this version">v0.3</button>
+    <button type="button" class="ver" data-news-open title="What's new in this version">v0.4</button>
     <span class="spec" id="specChip">70 × 41 mm · 21 per A4 · sheet 32091</span>
     <span class="grow"></span>
     <button type="button" class="btn small" data-news-open>What's new</button>
@@ -267,6 +277,31 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
       <span>One line per row</span>
       <span id="lineCount"></span>
     </div>
+    <div class="format">
+      <div class="seg inline" id="alignSeg" role="radiogroup" aria-label="Text alignment">
+        <button type="button" role="radio" aria-checked="true" data-align="left">Left</button>
+        <button type="button" role="radio" aria-checked="false" data-align="center">Centre</button>
+      </div>
+      <label class="chip" for="boldFirst"><input type="checkbox" id="boldFirst"> Bold first line</label>
+      <label class="chip" for="capsLast" title="For mail abroad, put the destination country on the last line in capitals."><input type="checkbox" id="capsLast"> Last line in capitals</label>
+      <label class="chip" for="maxPt">Size up to
+        <select id="maxPt">
+          <option value="9">9 pt</option>
+          <option value="10">10 pt</option>
+          <option value="11">11 pt</option>
+          <option value="12">12 pt</option>
+          <option value="13">13 pt</option>
+          <option value="14">14 pt</option>
+        </select>
+      </label>
+      <label class="chip" for="fontSel">Font
+        <select id="fontSel">
+          <option value="arial">Arial</option>
+          <option value="verdana">Verdana</option>
+          <option value="georgia">Georgia</option>
+        </select>
+      </label>
+    </div>
     <figure class="preview" id="previewWrap">
       <div class="preview-stage" id="previewStage"><div class="preview-scale" id="previewScale"></div></div>
       <figcaption id="fitInfo"></figcaption>
@@ -299,12 +334,18 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
 (() => {
   'use strict';
 
-  const VERSION = '0.3';
+  const VERSION = '0.4';
   const KEY = 'alp-' + VERSION;
-  const OLDER_KEYS = [];
+  const OLDER_KEYS = ["alp-0.3"];
   const SHEET_32091 = Object.freeze({ cols: 3, rows: 7, w: 70, h: 41, top: 5, left: 0, gapX: 0, gapY: 0 });
   const TEXT_INSET = Object.freeze({ l: 7, r: 5, tb: 4 });
   const PAGE_W = 210, PAGE_H = 297;
+  const FIT_MIN_NOWRAP = 9, FIT_MIN = 6, FIT_STEP = 0.25;
+  const FONT_STACKS = {
+    arial: 'Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif',
+    verdana: 'Verdana, Geneva, "DejaVu Sans", sans-serif',
+    georgia: 'Georgia, "Times New Roman", serif'
+  };
   const EXAMPLE = ['Ms Elena Ruiz', 'Universidad de Ejemplo', 'Calle Mayor 10', '28013 Madrid', 'SPAIN'];
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -349,6 +390,7 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
       used: {},
       current: 1,
       draft: '',
+      style: { align: 'left', boldFirst: true, capsLast: false, maxPt: 11, font: 'arial' },
     };
   }
   /* Reads this version's saved data, or data saved by an older version. */
@@ -358,6 +400,7 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     if (+o.current >= 1) s.current = Math.round(+o.current);
     else if (+o.start >= 1) s.current = Math.round(+o.start);
     if (typeof o.draft === 'string') s.draft = o.draft;
+    if (isObj(o.style)) Object.assign(s.style, o.style);
     return s;
   }
   function load() {
@@ -433,19 +476,59 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
   function labelEl(lines, fit) {
     const s = sh(), ins = inset();
     const el = make('div', 'lbl');
+    el.style.fontFamily = FONT_STACKS[S.style.font] || FONT_STACKS.arial;
     el.style.width = s.w + 'mm';
     el.style.height = s.h + 'mm';
     el.style.padding = ins.tb + 'mm ' + ins.r + 'mm ' + ins.tb + 'mm ' + ins.l + 'mm';
     const box = make('div', 'lbl-box');
     const inner = make('div', 'lbl-addr');
-    inner.style.fontSize = '11pt';
+    if (S.style.align === 'center') inner.classList.add('align-center');
+    if (fit && !fit.wrap) inner.classList.add('nowrap');
+    inner.style.fontSize = (fit ? fit.size : S.style.maxPt) + 'pt';
     lines.forEach((ln, i) => {
       const d = make('div', 'ln', ln || ' ');
+      if (i === 0 && S.style.boldFirst) d.classList.add('b');
+      if (i === lines.length - 1 && lines.length > 1 && S.style.capsLast) d.classList.add('caps');
       inner.appendChild(d);
     });
     box.appendChild(inner);
     el.appendChild(box);
     return el;
+  }
+  /* Largest size up to the chosen maximum where every line fits unwrapped (down to 9 pt);
+     otherwise long lines wrap, and only then does the text shrink further. */
+  const fitCache = new Map();
+  function fitText(lines) {
+    if (!lines.length) return { size: S.style.maxPt, wrap: true, over: false };
+    const key = JSON.stringify([lines, S.style, sh().w, sh().h, inset()]);
+    const hit = fitCache.get(key);
+    if (hit) return hit;
+    const host = $('#measure');
+    const el = labelEl(lines, null);
+    host.replaceChildren(el);
+    const box = $('.lbl-box', el), inner = $('.lbl-addr', el);
+    const boxH = box.getBoundingClientRect().height;
+    const fitsH = () => inner.getBoundingClientRect().height <= boxH + 0.5;
+    const fitsW = () => inner.scrollWidth <= inner.clientWidth + 1;
+    const max = clamp(+S.style.maxPt || 11, 6, 20);
+    let res = null;
+    inner.classList.add('nowrap');
+    for (let s = max; s >= FIT_MIN_NOWRAP - 0.001; s -= FIT_STEP) {
+      inner.style.fontSize = s + 'pt';
+      if (fitsW() && fitsH()) { res = { size: s, wrap: false, over: false }; break; }
+    }
+    if (!res) {
+      inner.classList.remove('nowrap');
+      for (let s = max; s >= FIT_MIN - 0.001; s -= FIT_STEP) {
+        inner.style.fontSize = s + 'pt';
+        if (fitsH()) { res = { size: s, wrap: true, over: false }; break; }
+      }
+    }
+    if (!res) res = { size: FIT_MIN, wrap: true, over: true };
+    host.replaceChildren();
+    if (fitCache.size > 300) fitCache.clear();
+    fitCache.set(key, res);
+    return res;
   }
 
   /* ---------- Rendering ---------- */
@@ -535,7 +618,8 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     const lines = cleanLines(currentText());
     const example = !lines.length;
     const use = example ? EXAMPLE : lines;
-    const el = labelEl(use, null);
+    const f = fitText(use);
+    const el = labelEl(use, f);
     if (example) el.classList.add('is-example');
     $('#previewScale').replaceChildren(el);
     scalePreview();
@@ -544,7 +628,11 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     if (example) { cap.textContent = 'Example label. Type an address to see yours.'; return; }
     const sp = startPos();
     const where = sp ? 'Label ' + sp : 'Sheet full';
-    cap.textContent = where + ' · enlarged preview';
+    if (f.over) { cap.classList.add('warn'); cap.textContent = 'Too much text: the end will be cut off. Shorten the address or choose a smaller size.'; return; }
+    let msg = where + ' · text ' + fmtNum(f.size) + ' pt';
+    if (f.size < S.style.maxPt) msg += ', reduced to fit';
+    if (f.wrap) msg += '; a long line wraps';
+    cap.textContent = msg + ' · enlarged';
   }
   let lastPreviewW = 0;
   function scalePreview(force) {
@@ -582,6 +670,11 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
   }
 
   function syncControls() {
+    $$('#alignSeg button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.align === S.style.align)));
+    $('#boldFirst').checked = !!S.style.boldFirst;
+    $('#capsLast').checked = !!S.style.capsLast;
+    $('#maxPt').value = String(S.style.maxPt);
+    $('#fontSel').value = S.style.font in FONT_STACKS ? S.style.font : 'arial';
     const n = cleanLines(currentText()).length;
     $('#lineCount').textContent = n ? n + ' line' + (n === 1 ? '' : 's') : '';
   }
@@ -619,7 +712,7 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
       const sec = make('section', 'print-page');
       for (const it of page.items) {
         const lines = cleanLines(it.text);
-        const el = labelEl(lines, null);
+        const el = labelEl(lines, fitText(lines));
         el.classList.add('placed');
         const { x, y } = posXY(it.pos);
         el.style.left = x + 'mm';
@@ -762,6 +855,17 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     renderAll();
     addr.focus();
   });
+  $('#alignSeg').addEventListener('click', e => {
+    const b = e.target.closest('button[data-align]');
+    if (!b) return;
+    S.style.align = b.dataset.align;
+    save();
+    renderDraft();
+  });
+  $('#boldFirst').addEventListener('change', e => { S.style.boldFirst = e.target.checked; save(); renderDraft(); });
+  $('#capsLast').addEventListener('change', e => { S.style.capsLast = e.target.checked; save(); renderDraft(); });
+  $('#maxPt').addEventListener('change', e => { S.style.maxPt = +e.target.value; save(); renderDraft(); });
+  $('#fontSel').addEventListener('change', e => { S.style.font = e.target.value; save(); renderDraft(); });
   $('#printBtn').addEventListener('click', () => doPrint('labels'));
 
   window.addEventListener('storage', e => {
@@ -787,8 +891,8 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
 <script>/* What's new: the story, notes, demo steps and technical notes of this version, and the notes of the ones before it. */
 (() => {
   'use strict';
-  const VERSION = '0.3';
-  const RELEASES = [{"v": "0.1", "title": "First print", "summary": "Type an address, pick a label number and print it in exactly the right place.", "highlight": "The smallest tool that solves the real problem: one address on one label of a half-used sheet, without a Word template or a test print.", "notes": [["New", "Type an address and print it on any of the 21 labels of sheet 32091 (70 × 41 mm)."], ["New", "Exact placement on A4: 3 labels across, 7 down, starting 5 mm from the top edge of the paper."], ["New", "Only the address is printed, so a half-used sheet can go back in the printer."], ["New", "Print tips for Edge and Chrome: Scale 100%, Margins Default, Headers and footers off."], ["New", "Light and dark mode follow the setting of your computer."], ["Known issue", "You choose the label by its number, and there is no preview yet."], ["Known issue", "Very long lines are cut off at the right edge of the label."], ["Known issue", "Nothing is saved yet: the address is gone when you close the page."]], "try": ["Type a name and address, one line per row.", "Under Label on the sheet, choose Label 5 (row 2, middle).", "Press Print label. In the print window, check Scale 100% and Margins Default.", "Print on plain paper and hold it over a label sheet against the light: the text sits on label 5."], "tech": ["One self-contained HTML file: no installation, no internet connection and no libraries.", "The print page is A4 with zero page margins (CSS @page). Each label is placed in millimetres: left is column × 70 mm, top is 5 mm + row × 41 mm.", "The text keeps 7 mm from the left edge of the label, 5 mm from the right and 4 mm from the top and bottom.", "When printing, the screen interface is hidden and only a separate print layer goes to the printer."]}, {"v": "0.2", "title": "See the sheet", "summary": "Pick the label on a picture of the sheet and see a live preview.", "highlight": "Label numbers were the easiest thing to get wrong in 0.1. Now the sheet itself is the control: click the label you want and watch the address appear on an enlarged preview.", "notes": [["New", "Choose the label on a picture of the sheet instead of typing its number."], ["New", "Live preview of the label, enlarged, as you type."], ["New", "Arrow keys move around the sheet picture, and Enter chooses a label."], ["Improved", "The address now sits in the vertical middle of the label."], ["Improved", "Print stays disabled until there is an address, and the button names the label, such as Print on label 8."], ["Known issue", "The tool does not know yet which labels are already used."], ["Known issue", "Long lines are still cut off at the edge of the label."]], "try": ["Click label 8 on the sheet picture. It turns yellow.", "Type an address and watch the enlarged preview fill in.", "Use the arrow keys to move around the sheet, then press Enter to choose a label.", "Press Print on label 8."], "tech": ["The sheet picture and the print are drawn from the same sheet measurements, so they cannot disagree.", "The preview is the real print label at its true size in millimetres, enlarged on screen with a CSS transform.", "The sheet picture works as a group of radio buttons, so screen readers announce each label and which one is chosen."]}, {"v": "0.3", "title": "Remembers your sheet", "summary": "Used labels are tracked, and your work is saved in the browser.", "highlight": "A label sheet is used over days, not minutes. 0.3 remembers which labels are gone, picks the next free one for you and keeps everything in the browser, so a sheet can be finished next week.", "notes": [["New", "After printing, the label is marked as used and the next free label is selected."], ["New", "Mark used, for labels that are already gone from your sheet, and Start a new sheet."], ["New", "Undo right after printing, in case you cancelled the print window."], ["New", "Your sheet and the address you are typing are saved in this browser."], ["New", "A message appears if the print window does not open."], ["New", "Press Ctrl+Enter in the address box to print."], ["Improved", "Used labels show who they were printed for. Hover over one to see the date as well."], ["Known issue", "Long addresses still run off the edge of the label."]], "try": ["Print an address on label 2. When the print window closes, label 2 shows as used and label 3 is selected.", "Press Undo in the message at the bottom to free label 2 again.", "Switch to Mark used and click label 1, as if it had been peeled off already.", "Reload the page: the sheet and your address are still there."], "tech": ["The state is saved as JSON in the browser's local storage, on this computer only.", "Printing is followed with the browser's beforeprint and afterprint events. Labels are marked as used only after the print window closes.", "If no beforeprint event arrives within 2.5 seconds, the tool reports that the print window did not open.", "Two tabs with the tool open stay in step through the browser's storage event."]}];
+  const VERSION = '0.4';
+  const RELEASES = [{"v": "0.1", "title": "First print", "summary": "Type an address, pick a label number and print it in exactly the right place.", "highlight": "The smallest tool that solves the real problem: one address on one label of a half-used sheet, without a Word template or a test print.", "notes": [["New", "Type an address and print it on any of the 21 labels of sheet 32091 (70 × 41 mm)."], ["New", "Exact placement on A4: 3 labels across, 7 down, starting 5 mm from the top edge of the paper."], ["New", "Only the address is printed, so a half-used sheet can go back in the printer."], ["New", "Print tips for Edge and Chrome: Scale 100%, Margins Default, Headers and footers off."], ["New", "Light and dark mode follow the setting of your computer."], ["Known issue", "You choose the label by its number, and there is no preview yet."], ["Known issue", "Very long lines are cut off at the right edge of the label."], ["Known issue", "Nothing is saved yet: the address is gone when you close the page."]], "try": ["Type a name and address, one line per row.", "Under Label on the sheet, choose Label 5 (row 2, middle).", "Press Print label. In the print window, check Scale 100% and Margins Default.", "Print on plain paper and hold it over a label sheet against the light: the text sits on label 5."], "tech": ["One self-contained HTML file: no installation, no internet connection and no libraries.", "The print page is A4 with zero page margins (CSS @page). Each label is placed in millimetres: left is column × 70 mm, top is 5 mm + row × 41 mm.", "The text keeps 7 mm from the left edge of the label, 5 mm from the right and 4 mm from the top and bottom.", "When printing, the screen interface is hidden and only a separate print layer goes to the printer."]}, {"v": "0.2", "title": "See the sheet", "summary": "Pick the label on a picture of the sheet and see a live preview.", "highlight": "Label numbers were the easiest thing to get wrong in 0.1. Now the sheet itself is the control: click the label you want and watch the address appear on an enlarged preview.", "notes": [["New", "Choose the label on a picture of the sheet instead of typing its number."], ["New", "Live preview of the label, enlarged, as you type."], ["New", "Arrow keys move around the sheet picture, and Enter chooses a label."], ["Improved", "The address now sits in the vertical middle of the label."], ["Improved", "Print stays disabled until there is an address, and the button names the label, such as Print on label 8."], ["Known issue", "The tool does not know yet which labels are already used."], ["Known issue", "Long lines are still cut off at the edge of the label."]], "try": ["Click label 8 on the sheet picture. It turns yellow.", "Type an address and watch the enlarged preview fill in.", "Use the arrow keys to move around the sheet, then press Enter to choose a label.", "Press Print on label 8."], "tech": ["The sheet picture and the print are drawn from the same sheet measurements, so they cannot disagree.", "The preview is the real print label at its true size in millimetres, enlarged on screen with a CSS transform.", "The sheet picture works as a group of radio buttons, so screen readers announce each label and which one is chosen."]}, {"v": "0.3", "title": "Remembers your sheet", "summary": "Used labels are tracked, and your work is saved in the browser.", "highlight": "A label sheet is used over days, not minutes. 0.3 remembers which labels are gone, picks the next free one for you and keeps everything in the browser, so a sheet can be finished next week.", "notes": [["New", "After printing, the label is marked as used and the next free label is selected."], ["New", "Mark used, for labels that are already gone from your sheet, and Start a new sheet."], ["New", "Undo right after printing, in case you cancelled the print window."], ["New", "Your sheet and the address you are typing are saved in this browser."], ["New", "A message appears if the print window does not open."], ["New", "Press Ctrl+Enter in the address box to print."], ["Improved", "Used labels show who they were printed for. Hover over one to see the date as well."], ["Known issue", "Long addresses still run off the edge of the label."]], "try": ["Print an address on label 2. When the print window closes, label 2 shows as used and label 3 is selected.", "Press Undo in the message at the bottom to free label 2 again.", "Switch to Mark used and click label 1, as if it had been peeled off already.", "Reload the page: the sheet and your address are still there."], "tech": ["The state is saved as JSON in the browser's local storage, on this computer only.", "Printing is followed with the browser's beforeprint and afterprint events. Labels are marked as used only after the print window closes.", "If no beforeprint event arrives within 2.5 seconds, the tool reports that the print window did not open.", "Two tabs with the tool open stay in step through the browser's storage event."]}, {"v": "0.4", "title": "Text that fits", "summary": "Addresses shrink to fit, and the first text options arrive.", "highlight": "Real addresses are messy: long faculty names, two-line organisations, countries abroad. 0.4 makes every address fit by itself and adds the first simple text options.", "notes": [["New", "Long addresses shrink automatically so every line stays on the label."], ["New", "Text options: bold first line, left or centred, largest size, font, and the last line in capitals."], ["New", "A status line shows the printed text size and warns when the text is too long."], ["Fixed", "Long lines are no longer cut off at the edge of the label."], ["Improved", "Your saved sheet carries over automatically when the tool is updated."], ["Known issue", "An address has to be typed again the next time you need it."]], "try": ["Paste a long address, such as a faculty name on one line. The preview shrinks the text, or wraps a very long line, and the status line says which.", "Tick Bold first line and Last line in capitals.", "Choose Georgia as the font and Centre as the alignment.", "Print: the long line stays inside the label."], "tech": ["Fitting measures a hidden copy of the label, trying sizes from the chosen maximum downwards in 0.25 pt steps.", "Every line stays on one line down to 9 pt. Only then may a long line wrap, and the text shrinks further only if it must, to 6 pt at the smallest.", "Results are cached, so typing stays smooth.", "On first start, the newest saved data from an older version is imported."]}];
   const AUTO_OPEN = true;
   const TAG_CLASS = { New: 'new', Improved: 'improved', Fixed: 'fixed', 'Known issue': 'known' };
   const dlg = document.getElementById('newsDlg');
