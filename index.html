@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Address Label Printer v0.4</title>
+<title>Address Label Printer v0.5</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7.5' fill='%232443b5'/%3E%3Cpath d='M7 9.5h18a2 2 0 0 1 2 2V17l-5.5 5.5H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z' fill='%23fff'/%3E%3Cpath d='M27 17l-5.5 5.5V19a2 2 0 0 1 2-2z' fill='%23b9c6f3'/%3E%3Crect x='8.5' y='12.2' width='10' height='2.4' rx='1.2' fill='%232443b5'/%3E%3Crect x='8.5' y='16' width='12.5' height='1.7' rx='.85' fill='%239aabe6'/%3E%3Crect x='8.5' y='19.1' width='8' height='1.7' rx='.85' fill='%239aabe6'/%3E%3C/svg%3E">
 <style>
-/* Address Label Printer, version 0.4.
-   Layout: the label sheet as a physical object on the left, the address and its live preview next to it. */
+/* Address Label Printer, version 0.5.
+   Layout: the label sheet as a physical object on the left, the address and its live preview next to it,
+   and the address list on the right. */
 :root {
   --desk: #eceef2;
   --panel: #ffffff;
@@ -96,8 +97,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .chip input[type="checkbox"] { accent-color: var(--action); width: 15px; height: 15px; margin: 0; }
 .chip select { border: 0; background: transparent; padding: 0 2px; font-weight: 500; cursor: pointer; }
 
-.top-inner, .bench { max-width: 1120px; }
-.bench { margin: 0 auto; padding-block: 20px 48px; display: grid; gap: 20px; align-items: start; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); }
+.top-inner, .bench { max-width: 1400px; }
+.bench { margin: 0 auto; padding-block: 20px 48px; display: grid; gap: 20px; align-items: start; grid-template-columns: minmax(250px, 310px) minmax(0, 1fr) minmax(270px, 360px); }
+@media (max-width: 1180px) { .bench { grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); } .book-panel { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .bench { grid-template-columns: minmax(0, 1fr); } }
 .panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
@@ -144,9 +146,30 @@ textarea:focus { outline: none; border-color: var(--action); box-shadow: 0 0 0 3
 .print-btn { flex: 1 1 230px; min-height: 50px; flex-direction: column; gap: 2px; padding: 8px 16px; }
 .pb-main { font-size: 16.5px; font-weight: 600; line-height: 1.2; }
 .pb-sub { font-size: 12px; font-weight: 400; opacity: 0.85; }
+.editor-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .checklist { border-top: 1px solid var(--rule); padding-top: 12px; font-size: 13.5px; color: var(--ink-2); }
 .checklist summary { cursor: pointer; font-weight: 500; color: var(--ink); }
 .checklist ol { margin: 8px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; max-width: 62ch; }
+
+/* Address list */
+.search { width: 100%; border: 1px solid var(--rule); border-radius: 8px; background: var(--field); padding: 8px 12px; }
+.search:focus { outline: none; border-color: var(--action); box-shadow: 0 0 0 3px var(--action-soft); }
+.book { list-style: none; margin: 0; padding: 0; max-height: 560px; overflow-y: auto; border-top: 1px solid var(--rule); }
+.book:empty { display: none; }
+.entry { display: grid; align-items: center; gap: 10px; padding: 10px 6px; border-bottom: 1px solid var(--rule); }
+.entry { grid-template-columns: minmax(0, 1fr) auto; }
+.entry.loaded { background: var(--action-soft); }
+.entry-main { min-width: 0; display: flex; flex-direction: column; gap: 1px; border: 0; background: none; padding: 0; text-align: left; cursor: pointer; }
+.e-name { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.e-rest { font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.e-meta { font: 400 11.5px/1.4 var(--f-data); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.entry-main:hover .e-name { color: var(--action); }
+.e-del { border: 0; background: none; color: var(--ink-3); font-size: 12.5px; padding: 5px 8px; border-radius: 6px; cursor: pointer; opacity: 0; white-space: nowrap; }
+.entry:hover .e-del, .entry:focus-within .e-del, .e-del.armed { opacity: 1; }
+.e-del:hover { color: var(--danger); background: var(--danger-soft); }
+.e-del.armed, .e-del.armed:hover { color: var(--danger-ink); background: var(--danger); }
+@media (hover: none) { .e-del { opacity: 1; } }
+.empty { margin: 0; padding: 14px; border: 1px dashed var(--rule); border-radius: 8px; font-size: 13.5px; color: var(--ink-2); }
 
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 50; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 32px); padding: 10px 14px; border-radius: 10px; background: var(--toast); color: var(--toast-ink); font-size: 14px; box-shadow: 0 12px 32px var(--shade); }
 .toast button { flex: none; border: 0; background: none; color: var(--toast-act); font-weight: 600; cursor: pointer; padding: 2px 4px; }
@@ -238,7 +261,7 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
 <header class="top">
   <div class="top-inner gutter">
     <h1 class="brand"><svg class="app-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="7.5" fill="#2443b5"/><path d="M7 9.5h18a2 2 0 0 1 2 2V17l-5.5 5.5H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z" fill="#fff"/><path d="M27 17l-5.5 5.5V19a2 2 0 0 1 2-2z" fill="#b9c6f3"/><rect x="8.5" y="12.2" width="10" height="2.4" rx="1.2" fill="#2443b5"/><rect x="8.5" y="16" width="12.5" height="1.7" rx=".85" fill="#9aabe6"/><rect x="8.5" y="19.1" width="8" height="1.7" rx=".85" fill="#9aabe6"/></svg><span>Address Label Printer</span></h1>
-    <button type="button" class="ver" data-news-open title="What's new in this version">v0.4</button>
+    <button type="button" class="ver" data-news-open title="What's new in this version">v0.5</button>
     <span class="spec" id="specChip">70 × 41 mm · 21 per A4 · sheet 32091</span>
     <span class="grow"></span>
     <button type="button" class="btn small" data-news-open>What's new</button>
@@ -309,6 +332,9 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     <div class="print-row">
       <button type="button" class="btn primary print-btn" id="printBtn"><span class="pb-main">Print</span><span class="pb-sub"></span></button>
     </div>
+    <div class="editor-foot">
+      <button type="button" class="btn small" id="saveAddr">Save to address list</button>
+    </div>
     <details class="checklist">
       <summary>Print settings checklist</summary>
       <ol>
@@ -318,6 +344,17 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     </details>
   </section>
 
+  <section class="panel book-panel" aria-labelledby="bookTitle">
+    <div class="panel-head">
+      <h2 id="bookTitle">Address list</h2>
+      <span class="count" id="bookCount"></span>
+    </div>
+    <input type="search" class="search" id="search" placeholder="Search name, street, town or country" aria-label="Search the address list">
+    <ul class="book" id="bookList"></ul>
+    <p class="empty" id="bookEmpty">Every address you print is kept here, newest first. Click one to put it back in the editor.</p>
+    <p class="empty" id="noMatch" hidden>No address matches your search.</p>
+    <p class="help">The list is stored in this browser on this computer.</p>
+  </section>
 </main>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toastMsg"></span><button type="button" id="toastAct" hidden></button></div>
@@ -334,9 +371,9 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
 (() => {
   'use strict';
 
-  const VERSION = '0.4';
+  const VERSION = '0.5';
   const KEY = 'alp-' + VERSION;
-  const OLDER_KEYS = ["alp-0.3"];
+  const OLDER_KEYS = ["alp-0.4", "alp-0.3"];
   const SHEET_32091 = Object.freeze({ cols: 3, rows: 7, w: 70, h: 41, top: 5, left: 0, gapX: 0, gapY: 0 });
   const TEXT_INSET = Object.freeze({ l: 7, r: 5, tb: 4 });
   const PAGE_W = 210, PAGE_H = 297;
@@ -383,6 +420,9 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     for (const l of raw) { if (!l && !out[out.length - 1]) continue; out.push(l); }
     return out;
   }
+  const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const norm = t => fold(cleanLines(t).join(' ')).replace(/\s+/g, ' ').trim();
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
   /* ---------- State, saved in this browser ---------- */
   function defaults() {
@@ -391,6 +431,8 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
       current: 1,
       draft: '',
       style: { align: 'left', boldFirst: true, capsLast: false, maxPt: 11, font: 'arial' },
+      book: [],
+      loadedId: null,
     };
   }
   /* Reads this version's saved data, or data saved by an older version. */
@@ -401,6 +443,8 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     else if (+o.start >= 1) s.current = Math.round(+o.start);
     if (typeof o.draft === 'string') s.draft = o.draft;
     if (isObj(o.style)) Object.assign(s.style, o.style);
+    if (Array.isArray(o.book)) s.book = o.book.filter(e => e && typeof e.text === 'string');
+    if (o.loadedId) s.loadedId = o.loadedId;
     return s;
   }
   function load() {
@@ -669,6 +713,21 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     }
   }
 
+  function loadedEntry() {
+    if (!S.loadedId) return null;
+    const e = S.book.find(b => b.id === S.loadedId);
+    if (!e) return null;
+    return fold(cleanLines(S.draft)[0] || '') === fold(cleanLines(e.text)[0] || '') ? e : null;
+  }
+  function renderSaveButton() {
+    const btn = $('#saveAddr');
+    if (!cleanLines(currentText()).length) { btn.disabled = true; btn.textContent = 'Save to address list'; return; }
+    const key = norm(currentText());
+    if (S.book.some(b => norm(b.text) === key)) { btn.disabled = true; btn.textContent = 'In your address list'; return; }
+    btn.disabled = false;
+    btn.textContent = loadedEntry() ? 'Update saved address' : 'Save to address list';
+  }
+
   function syncControls() {
     $$('#alignSeg button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.align === S.style.align)));
     $('#boldFirst').checked = !!S.style.boldFirst;
@@ -679,15 +738,57 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     $('#lineCount').textContent = n ? n + ' line' + (n === 1 ? '' : 's') : '';
   }
 
+  function bookSorted() {
+    return S.book.slice().sort((a, b) => String(b.last || b.added || '').localeCompare(String(a.last || a.added || '')));
+  }
+  function visibleBook() {
+    const q = fold($('#search').value).trim();
+    const all = bookSorted();
+    if (!q) return all;
+    const terms = q.split(/\s+/);
+    return all.filter(e => { const hay = fold(e.text); return terms.every(t => hay.includes(t)); });
+  }
+  function renderBook() {
+    const items = visibleBook();
+    $('#bookCount').textContent = S.book.length ? S.book.length + ' saved' : '';
+    $('#bookEmpty').hidden = S.book.length > 0;
+    $('#noMatch').hidden = !(S.book.length && !items.length);
+    $('#search').hidden = S.book.length === 0;
+    const active = S.loadedId;
+    const frag = document.createDocumentFragment();
+    for (const e of items) {
+      const lines = cleanLines(e.text);
+      const li = make('li', 'entry' + (e.id === active ? ' loaded' : ''));
+      const main = make('button', 'entry-main');
+      main.type = 'button';
+      main.dataset.id = e.id;
+      main.title = 'Put this address in the editor';
+      main.append(
+        make('span', 'e-name', lines[0] || ''),
+        make('span', 'e-rest', lines.slice(1).join(', ')),
+        make('span', 'e-meta', e.count ? 'Printed ' + e.count + '×, last ' + fmtDate(e.last) : 'Added ' + fmtDate(e.added))
+      );
+      const del = make('button', 'e-del', 'Delete');
+      del.type = 'button';
+      del.dataset.id = e.id;
+      del.setAttribute('aria-label', 'Delete ' + (lines[0] || 'address'));
+      li.append(main, del);
+      frag.appendChild(li);
+    }
+    $('#bookList').replaceChildren(frag);
+  }
+
   function renderDraft() {
     const job = buildJob();
     renderMap(job);
     renderHints(job);
     renderPreview();
     renderPrintButton(job);
+    renderSaveButton();
     syncControls();
   }
   function renderAll() {
+    renderBook();
     renderDraft();
   }
 
@@ -703,6 +804,42 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     toastTimer = setTimeout(hideToast, actLabel ? 10000 : 4500);
   }
   function hideToast() { $('#toast').hidden = true; }
+
+  /* ---------- Address list ---------- */
+  function upsert(text, printed) {
+    const clean = cleanLines(text).join('\n');
+    const key = norm(clean), now = new Date().toISOString();
+    let e = S.book.find(b => norm(b.text) === key);
+    if (!e) { e = { id: uid(), text: clean, added: now, count: 0, last: null }; S.book.push(e); }
+    if (printed) { e.count = (e.count || 0) + printed; e.last = now; }
+    return e;
+  }
+  function loadEntry(id) {
+    const e = S.book.find(b => b.id === id);
+    if (!e) return;
+    S.draft = e.text;
+    S.loadedId = id;
+    $('#addr').value = e.text;
+    save();
+    renderAll();
+    if (window.matchMedia('(max-width: 760px)').matches) {
+      const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      $('#addr').scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+    }
+  }
+  function deleteEntry(id) {
+    const idx = S.book.findIndex(b => b.id === id);
+    if (idx < 0) return;
+    const gone = S.book.splice(idx, 1)[0];
+    if (S.loadedId === id) S.loadedId = null;
+    save();
+    renderAll();
+    toast('Deleted ' + (cleanLines(gone.text)[0] || 'the address') + '.', 'Undo', () => {
+      S.book.splice(Math.min(idx, S.book.length), 0, gone);
+      save();
+      renderAll();
+    });
+  }
 
   /* ---------- Printing ---------- */
   function buildPrint(kind, job) {
@@ -765,6 +902,14 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
     const lastPos = last.items[last.items.length - 1].pos;
     S.current = firstFree(lastPos + 1) || firstFree(1) || lastPos;
     const count = jobCount(job);
+    const le = loadedEntry();
+    if (le) {
+      le.text = cleanLines(S.draft).join('\n');
+      le.count = (le.count || 0) + count;
+      le.last = new Date().toISOString();
+    } else {
+      S.loadedId = upsert(S.draft, count).id;
+    }
     save();
     renderAll();
     let msg;
@@ -842,6 +987,7 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
   const addr = $('#addr');
   addr.addEventListener('input', () => {
     S.draft = addr.value;
+    if (!S.draft.trim()) S.loadedId = null;
     save();
     renderDraft();
   });
@@ -851,6 +997,7 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
   $('#clearAddr').addEventListener('click', () => {
     addr.value = '';
     S.draft = '';
+    S.loadedId = null;
     save();
     renderAll();
     addr.focus();
@@ -867,6 +1014,38 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
   $('#maxPt').addEventListener('change', e => { S.style.maxPt = +e.target.value; save(); renderDraft(); });
   $('#fontSel').addEventListener('change', e => { S.style.font = e.target.value; save(); renderDraft(); });
   $('#printBtn').addEventListener('click', () => doPrint('labels'));
+
+  $('#saveAddr').addEventListener('click', () => {
+    const le = loadedEntry();
+    if (le) {
+      le.text = cleanLines(currentText()).join('\n');
+      toast('Saved address updated.');
+    } else {
+      const e = upsert(currentText(), 0);
+      S.loadedId = e.id;
+      toast('Saved to your address list.');
+    }
+    save();
+    renderAll();
+  });
+  $('#search').addEventListener('input', renderBook);
+  let delTimer = null;
+  $('#bookList').addEventListener('click', e => {
+    const main = e.target.closest('.entry-main');
+    if (main) { loadEntry(main.dataset.id); return; }
+    const del = e.target.closest('.e-del');
+    if (!del) return;
+    if (!del.classList.contains('armed')) {
+      $$('#bookList .e-del.armed').forEach(x => { x.classList.remove('armed'); x.textContent = 'Delete'; });
+      del.classList.add('armed');
+      del.textContent = 'Confirm delete';
+      clearTimeout(delTimer);
+      delTimer = setTimeout(() => { del.classList.remove('armed'); del.textContent = 'Delete'; }, 4000);
+      return;
+    }
+    clearTimeout(delTimer);
+    deleteEntry(del.dataset.id);
+  });
 
   window.addEventListener('storage', e => {
     if (e.key !== KEY || !e.newValue) return;
@@ -891,8 +1070,8 @@ dialog::backdrop { background: rgba(17, 20, 25, 0.45); }
 <script>/* What's new: the story, notes, demo steps and technical notes of this version, and the notes of the ones before it. */
 (() => {
   'use strict';
-  const VERSION = '0.4';
-  const RELEASES = [{"v": "0.1", "title": "First print", "summary": "Type an address, pick a label number and print it in exactly the right place.", "highlight": "The smallest tool that solves the real problem: one address on one label of a half-used sheet, without a Word template or a test print.", "notes": [["New", "Type an address and print it on any of the 21 labels of sheet 32091 (70 × 41 mm)."], ["New", "Exact placement on A4: 3 labels across, 7 down, starting 5 mm from the top edge of the paper."], ["New", "Only the address is printed, so a half-used sheet can go back in the printer."], ["New", "Print tips for Edge and Chrome: Scale 100%, Margins Default, Headers and footers off."], ["New", "Light and dark mode follow the setting of your computer."], ["Known issue", "You choose the label by its number, and there is no preview yet."], ["Known issue", "Very long lines are cut off at the right edge of the label."], ["Known issue", "Nothing is saved yet: the address is gone when you close the page."]], "try": ["Type a name and address, one line per row.", "Under Label on the sheet, choose Label 5 (row 2, middle).", "Press Print label. In the print window, check Scale 100% and Margins Default.", "Print on plain paper and hold it over a label sheet against the light: the text sits on label 5."], "tech": ["One self-contained HTML file: no installation, no internet connection and no libraries.", "The print page is A4 with zero page margins (CSS @page). Each label is placed in millimetres: left is column × 70 mm, top is 5 mm + row × 41 mm.", "The text keeps 7 mm from the left edge of the label, 5 mm from the right and 4 mm from the top and bottom.", "When printing, the screen interface is hidden and only a separate print layer goes to the printer."]}, {"v": "0.2", "title": "See the sheet", "summary": "Pick the label on a picture of the sheet and see a live preview.", "highlight": "Label numbers were the easiest thing to get wrong in 0.1. Now the sheet itself is the control: click the label you want and watch the address appear on an enlarged preview.", "notes": [["New", "Choose the label on a picture of the sheet instead of typing its number."], ["New", "Live preview of the label, enlarged, as you type."], ["New", "Arrow keys move around the sheet picture, and Enter chooses a label."], ["Improved", "The address now sits in the vertical middle of the label."], ["Improved", "Print stays disabled until there is an address, and the button names the label, such as Print on label 8."], ["Known issue", "The tool does not know yet which labels are already used."], ["Known issue", "Long lines are still cut off at the edge of the label."]], "try": ["Click label 8 on the sheet picture. It turns yellow.", "Type an address and watch the enlarged preview fill in.", "Use the arrow keys to move around the sheet, then press Enter to choose a label.", "Press Print on label 8."], "tech": ["The sheet picture and the print are drawn from the same sheet measurements, so they cannot disagree.", "The preview is the real print label at its true size in millimetres, enlarged on screen with a CSS transform.", "The sheet picture works as a group of radio buttons, so screen readers announce each label and which one is chosen."]}, {"v": "0.3", "title": "Remembers your sheet", "summary": "Used labels are tracked, and your work is saved in the browser.", "highlight": "A label sheet is used over days, not minutes. 0.3 remembers which labels are gone, picks the next free one for you and keeps everything in the browser, so a sheet can be finished next week.", "notes": [["New", "After printing, the label is marked as used and the next free label is selected."], ["New", "Mark used, for labels that are already gone from your sheet, and Start a new sheet."], ["New", "Undo right after printing, in case you cancelled the print window."], ["New", "Your sheet and the address you are typing are saved in this browser."], ["New", "A message appears if the print window does not open."], ["New", "Press Ctrl+Enter in the address box to print."], ["Improved", "Used labels show who they were printed for. Hover over one to see the date as well."], ["Known issue", "Long addresses still run off the edge of the label."]], "try": ["Print an address on label 2. When the print window closes, label 2 shows as used and label 3 is selected.", "Press Undo in the message at the bottom to free label 2 again.", "Switch to Mark used and click label 1, as if it had been peeled off already.", "Reload the page: the sheet and your address are still there."], "tech": ["The state is saved as JSON in the browser's local storage, on this computer only.", "Printing is followed with the browser's beforeprint and afterprint events. Labels are marked as used only after the print window closes.", "If no beforeprint event arrives within 2.5 seconds, the tool reports that the print window did not open.", "Two tabs with the tool open stay in step through the browser's storage event."]}, {"v": "0.4", "title": "Text that fits", "summary": "Addresses shrink to fit, and the first text options arrive.", "highlight": "Real addresses are messy: long faculty names, two-line organisations, countries abroad. 0.4 makes every address fit by itself and adds the first simple text options.", "notes": [["New", "Long addresses shrink automatically so every line stays on the label."], ["New", "Text options: bold first line, left or centred, largest size, font, and the last line in capitals."], ["New", "A status line shows the printed text size and warns when the text is too long."], ["Fixed", "Long lines are no longer cut off at the edge of the label."], ["Improved", "Your saved sheet carries over automatically when the tool is updated."], ["Known issue", "An address has to be typed again the next time you need it."]], "try": ["Paste a long address, such as a faculty name on one line. The preview shrinks the text, or wraps a very long line, and the status line says which.", "Tick Bold first line and Last line in capitals.", "Choose Georgia as the font and Centre as the alignment.", "Print: the long line stays inside the label."], "tech": ["Fitting measures a hidden copy of the label, trying sizes from the chosen maximum downwards in 0.25 pt steps.", "Every line stays on one line down to 9 pt. Only then may a long line wrap, and the text shrinks further only if it must, to 6 pt at the smallest.", "Results are cached, so typing stays smooth.", "On first start, the newest saved data from an older version is imported."]}];
+  const VERSION = '0.5';
+  const RELEASES = [{"v": "0.1", "title": "First print", "summary": "Type an address, pick a label number and print it in exactly the right place.", "highlight": "The smallest tool that solves the real problem: one address on one label of a half-used sheet, without a Word template or a test print.", "notes": [["New", "Type an address and print it on any of the 21 labels of sheet 32091 (70 × 41 mm)."], ["New", "Exact placement on A4: 3 labels across, 7 down, starting 5 mm from the top edge of the paper."], ["New", "Only the address is printed, so a half-used sheet can go back in the printer."], ["New", "Print tips for Edge and Chrome: Scale 100%, Margins Default, Headers and footers off."], ["New", "Light and dark mode follow the setting of your computer."], ["Known issue", "You choose the label by its number, and there is no preview yet."], ["Known issue", "Very long lines are cut off at the right edge of the label."], ["Known issue", "Nothing is saved yet: the address is gone when you close the page."]], "try": ["Type a name and address, one line per row.", "Under Label on the sheet, choose Label 5 (row 2, middle).", "Press Print label. In the print window, check Scale 100% and Margins Default.", "Print on plain paper and hold it over a label sheet against the light: the text sits on label 5."], "tech": ["One self-contained HTML file: no installation, no internet connection and no libraries.", "The print page is A4 with zero page margins (CSS @page). Each label is placed in millimetres: left is column × 70 mm, top is 5 mm + row × 41 mm.", "The text keeps 7 mm from the left edge of the label, 5 mm from the right and 4 mm from the top and bottom.", "When printing, the screen interface is hidden and only a separate print layer goes to the printer."]}, {"v": "0.2", "title": "See the sheet", "summary": "Pick the label on a picture of the sheet and see a live preview.", "highlight": "Label numbers were the easiest thing to get wrong in 0.1. Now the sheet itself is the control: click the label you want and watch the address appear on an enlarged preview.", "notes": [["New", "Choose the label on a picture of the sheet instead of typing its number."], ["New", "Live preview of the label, enlarged, as you type."], ["New", "Arrow keys move around the sheet picture, and Enter chooses a label."], ["Improved", "The address now sits in the vertical middle of the label."], ["Improved", "Print stays disabled until there is an address, and the button names the label, such as Print on label 8."], ["Known issue", "The tool does not know yet which labels are already used."], ["Known issue", "Long lines are still cut off at the edge of the label."]], "try": ["Click label 8 on the sheet picture. It turns yellow.", "Type an address and watch the enlarged preview fill in.", "Use the arrow keys to move around the sheet, then press Enter to choose a label.", "Press Print on label 8."], "tech": ["The sheet picture and the print are drawn from the same sheet measurements, so they cannot disagree.", "The preview is the real print label at its true size in millimetres, enlarged on screen with a CSS transform.", "The sheet picture works as a group of radio buttons, so screen readers announce each label and which one is chosen."]}, {"v": "0.3", "title": "Remembers your sheet", "summary": "Used labels are tracked, and your work is saved in the browser.", "highlight": "A label sheet is used over days, not minutes. 0.3 remembers which labels are gone, picks the next free one for you and keeps everything in the browser, so a sheet can be finished next week.", "notes": [["New", "After printing, the label is marked as used and the next free label is selected."], ["New", "Mark used, for labels that are already gone from your sheet, and Start a new sheet."], ["New", "Undo right after printing, in case you cancelled the print window."], ["New", "Your sheet and the address you are typing are saved in this browser."], ["New", "A message appears if the print window does not open."], ["New", "Press Ctrl+Enter in the address box to print."], ["Improved", "Used labels show who they were printed for. Hover over one to see the date as well."], ["Known issue", "Long addresses still run off the edge of the label."]], "try": ["Print an address on label 2. When the print window closes, label 2 shows as used and label 3 is selected.", "Press Undo in the message at the bottom to free label 2 again.", "Switch to Mark used and click label 1, as if it had been peeled off already.", "Reload the page: the sheet and your address are still there."], "tech": ["The state is saved as JSON in the browser's local storage, on this computer only.", "Printing is followed with the browser's beforeprint and afterprint events. Labels are marked as used only after the print window closes.", "If no beforeprint event arrives within 2.5 seconds, the tool reports that the print window did not open.", "Two tabs with the tool open stay in step through the browser's storage event."]}, {"v": "0.4", "title": "Text that fits", "summary": "Addresses shrink to fit, and the first text options arrive.", "highlight": "Real addresses are messy: long faculty names, two-line organisations, countries abroad. 0.4 makes every address fit by itself and adds the first simple text options.", "notes": [["New", "Long addresses shrink automatically so every line stays on the label."], ["New", "Text options: bold first line, left or centred, largest size, font, and the last line in capitals."], ["New", "A status line shows the printed text size and warns when the text is too long."], ["Fixed", "Long lines are no longer cut off at the edge of the label."], ["Improved", "Your saved sheet carries over automatically when the tool is updated."], ["Known issue", "An address has to be typed again the next time you need it."]], "try": ["Paste a long address, such as a faculty name on one line. The preview shrinks the text, or wraps a very long line, and the status line says which.", "Tick Bold first line and Last line in capitals.", "Choose Georgia as the font and Centre as the alignment.", "Print: the long line stays inside the label."], "tech": ["Fitting measures a hidden copy of the label, trying sizes from the chosen maximum downwards in 0.25 pt steps.", "Every line stays on one line down to 9 pt. Only then may a long line wrap, and the text shrinks further only if it must, to 6 pt at the smallest.", "Results are cached, so typing stays smooth.", "On first start, the newest saved data from an older version is imported."]}, {"v": "0.5", "title": "Address list", "summary": "Every printed address is kept, searchable and one click away.", "highlight": "Most labels go to the same people again and again. From 0.5 every printed address is kept in a searchable list, so the next label for someone takes two clicks.", "notes": [["New", "Every printed address is saved to an address list, newest first."], ["New", "Search by name, street, town or country. Accents are optional, so kovac finds Kovač."], ["New", "Click a saved address to use it again, or save one by hand."], ["New", "Each entry shows how often and when it was last printed."], ["New", "Delete addresses with a confirmation step and Undo."], ["Improved", "New three-panel layout: sheet, address and list side by side."], ["Known issue", "Addresses can only be added one at a time."]], "try": ["Print a label for Mojca Kovač. She appears at the top of the address list.", "Type kovac in the search box: the accent does not matter.", "Press Clear, then click her entry to put the address back.", "Press Delete and then Confirm delete on an entry, then Undo in the message."], "tech": ["The address list is saved together with the sheet in the same browser storage.", "Search ignores case and accents by breaking letters into base letter and accent (Unicode NFD) and dropping the accents.", "The same address is never saved twice: entries are compared after this folding."]}];
   const AUTO_OPEN = true;
   const TAG_CLASS = { New: 'new', Improved: 'improved', Fixed: 'fixed', 'Known issue': 'known' };
   const dlg = document.getElementById('newsDlg');
